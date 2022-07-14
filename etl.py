@@ -4,15 +4,12 @@ import requests
 import os
 import pandas as pd
 import json
+import numpy as np
 
 
 from sqlalchemy import create_engine
 
-HEADERS_CONVOCATORIAS_URL = 'https://raw.githubusercontent.com/JaimeObregon/subvenciones/main/db/mongodb/data/convocatorias-headers.csv'
-CONVOCATORIAS_URL = 'https://raw.githubusercontent.com/JaimeObregon/subvenciones/main/files/convocatorias.csv.gz'
-HEADERS_JURIDICAS_URL = 'https://raw.githubusercontent.com/JaimeObregon/subvenciones/main/db/mongodb/data/juridicas-headers.csv'
-JURIDICAS1_URL = 'https://raw.githubusercontent.com/JaimeObregon/subvenciones/main/files/juridicas_1.csv.gz'
-JURIDICAS2_URL = 'https://raw.githubusercontent.com/JaimeObregon/subvenciones/main/files/juridicas_2.csv.gz'
+GASOLINERAS_URL = 'https://geoportalgasolineras.es/resources/files/preciosEESS_es.xls'
 
 
 def download(url: str, name: str):
@@ -38,14 +35,7 @@ def extraction():
     Download data from GitHub repository
     '''
     os.makedirs('data/extraction', exist_ok=True)
-    download(HEADERS_CONVOCATORIAS_URL, 'headers_convocatorias.csv')
-    download(CONVOCATORIAS_URL, 'convocatorias.csv.gz')
-    unzip('convocatorias.csv.gz', 'convocatorias.csv')
-    download(HEADERS_JURIDICAS_URL, 'headers_juridicas.csv')
-    download(JURIDICAS1_URL, 'juridicas1.csv.gz')
-    unzip('juridicas1.csv.gz', 'juridicas1.csv')
-    download(JURIDICAS2_URL, 'juridicas2.csv.gz')
-    unzip('juridicas2.csv.gz', 'juridicas2.csv')
+    download(GASOLINERAS_URL, 'gasolineras.xls')
 
 
 def transformation():
@@ -53,12 +43,16 @@ def transformation():
     Clean all data
     '''
     os.makedirs('data/transformation', exist_ok=True)
-    names = pd.read_csv(
-        'data/extraction/headers_convocatorias.csv', skipinitialspace=True)
-
-    df = pd.read_csv('data/extraction/convocatorias.csv.gz', header=None, names=list(names),  skipinitialspace=True,
-                     compression='gzip', engine='python', encoding='utf-8', low_memory=True, memory_map=True)
-
+    df = pd.read_excel(
+        'data/extraction/gasolineras.xls',
+        header=0,
+        engine='xlrd',
+        skiprows=3,
+        decimal=',',
+        dtype={'Precio gasolina 95 E5': np.float32,
+               'Longitud': np.float32,
+               'Latitud': np.float32}
+    )
     return df
 
 

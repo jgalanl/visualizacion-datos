@@ -43,23 +43,26 @@ def extract():
     download(GASOLINERAS_URL, 'gasolineras.xls')
 
 
-def transform():
+def transform(file: str = 'data/extraction/precios1908.xls'):
     '''
     Clean and transform data
     '''
     os.makedirs('data/transformation', exist_ok=True)
 
     df = pd.read_excel(
-        'data/extraction/precios0208.xls',
+        file,
         header=0,
         engine='xlrd',
         nrows=1
     )
-    date_obj = datetime.strptime(df.columns[1], '%d/%m/%Y %H:%M').date()
+    if isinstance(df.columns[1], str):
+        date_obj = datetime.strptime(df.columns[1], '%d/%m/%Y %H:%M').date()
+    else:
+        date_obj = df.columns[1]
     week_day = calendar.day_name[date_obj.weekday()].title()
 
     df = pd.read_excel(
-        'data/extraction/precios0208.xls',
+        file,
         header=0,
         engine='xlrd',
         skiprows=3,

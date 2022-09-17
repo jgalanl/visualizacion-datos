@@ -39,15 +39,13 @@ def extract():
     '''
     Download data from GitHub repository
     '''
-    os.makedirs('data/extraction', exist_ok=True)
     download(GASOLINERAS_URL, 'gasolineras.xls')
 
 
-def transform(file: str = 'data/extraction/precios1908.xls'):
+def transform(file: str = 'data/extraction/septiembre/precios1709.xls'):
     '''
     Clean and transform data
     '''
-    os.makedirs('data/transformation', exist_ok=True)
 
     df = pd.read_excel(
         file,
@@ -123,6 +121,9 @@ def transform(file: str = 'data/extraction/precios1908.xls'):
 
     df['dia_semana'] = week_day
     df['dia'] = date_obj
+    df['24H'] = df.apply(
+        lambda x: True if '24H' in x['horario'] else False, axis=1
+    )
 
     return df
 
@@ -131,7 +132,6 @@ def load(data):
     '''
     Load data into PostgreSQL database
     '''
-    os.makedirs('data/load', exist_ok=True)
     with open('db/credentials.json') as json_file:
         config = json.load(json_file)
     engine = create_engine(
@@ -143,7 +143,7 @@ def load(data):
 
 
 def etl():
-    # extraction()
+    extract()
     data_transformed = transform()
     load(data_transformed)
     print('ETL finished successfully')
